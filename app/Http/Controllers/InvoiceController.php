@@ -12,7 +12,7 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        //
+        return Invoice::with('customer')->get();
     }
 
     /**
@@ -34,9 +34,9 @@ class InvoiceController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Invoice $invoice)
+    public function show($id)
     {
-        //
+        return Invoice::where('id',$id)->with(['customer','items.product'])->first();
     }
 
     /**
