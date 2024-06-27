@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\storeInvoiceRequest;
 use App\Models\Invoice;
 use Illuminate\Http\Request;
 
@@ -26,9 +27,9 @@ class InvoiceController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(storeInvoiceRequest $request)
     {
-        //
+        return $request;
     }
 
     /**

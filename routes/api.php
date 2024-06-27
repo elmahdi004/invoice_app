@@ -12,6 +12,7 @@ Route::get('/user', function (Request $request) {
 Route::controller(InvoiceController::class)->group(function(){
         Route::get('/invoices','index');
         Route::get('/invoice/{id}','show');
+        Route::post('/invoice','store');
 });
 
 Route::resources([

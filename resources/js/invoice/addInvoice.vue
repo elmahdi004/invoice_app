@@ -17,6 +17,7 @@
                             v-model="invoice.customer"
                             :disabled="loading"
                             class="input"
+                            :style="errors != '' && 'customer' in errors ? 'border:2px solid red;' : ''"
                         >
                             <option
                                 v-for="(customer, index) in customers"
@@ -26,6 +27,7 @@
                                 {{ customer.firstname }}
                             </option>
                         </select>
+                        <ErrorMessage v-if="errors != '' && 'customer' in errors" :message="errors.customer[0]"/>
                     </div>
                     <div>
                         <p class="my-1">Date</p>
@@ -73,10 +75,14 @@
                     <!-- item 1 -->
                     <div
                         class="table--items2"
-                        v-for="(item,idx) in invoice.items"
+                        v-for="(item, idx) in invoice.items"
                         :key="idx"
                     >
-                        <select v-model="item.product_id" @change="changeItem(idx,item.product_id)" id="">
+                        <select
+                            v-model="item.product_id"
+                            @change="changeItem(idx, item.product_id)"
+                            id=""
+                        >
                             <option
                                 v-for="(product, i) in products"
                                 :key="i"
@@ -86,18 +92,34 @@
                             </option>
                         </select>
                         <p>
-                            <input v-model="item.price" @input="changePrice(idx)" type="text" class="input" />
+                            <input
+                                v-model="item.price"
+                                @input="changePrice(idx)"
+                                type="text"
+                                class="input"
+                            />
                         </p>
                         <p>
-                            <input v-model="item.quantity" @input="changePrice(idx)" type="text" class="input" />
+                            <input
+                                v-model="item.quantity"
+                                @input="changePrice(idx)"
+                                type="text"
+                                class="input"
+                            />
                         </p>
-                        <p>$ {{item.total}}</p>
-                        <p @click="deleteItem(idx)" style="color: red; font-size: 24px; cursor: pointer">
+                        <p>$ {{ item.total }}</p>
+                        <p
+                            @click="deleteItem(idx)"
+                            style="color: red; font-size: 24px; cursor: pointer"
+                        >
                             &times;
                         </p>
                     </div>
                     <div style="padding: 10px 30px !important">
-                        <button @click="addNewLine" class="btn btn-sm btn__open--modal">
+                        <button
+                            @click="addNewLine"
+                            class="btn btn-sm btn__open--modal"
+                        >
                             Add New Line
                         </button>
                     </div>
@@ -110,20 +132,26 @@
                             cols="50"
                             rows="7"
                             class="textarea"
+                            v-model="invoice.terms"
                         ></textarea>
                     </div>
                     <div>
                         <div class="table__footer--subtotal">
                             <p>Sub Total</p>
-                            <span>$ {{invoice.sub_total}}</span>
+                            <span>$ {{ invoice.sub_total }}</span>
                         </div>
                         <div class="table__footer--discount">
                             <p>Discount</p>
-                            <input v-model="invoice.discount" @input="applyDiscount" type="text" class="input" />
+                            <input
+                                v-model="invoice.discount"
+                                @input="applyDiscount"
+                                type="text"
+                                class="input"
+                            />
                         </div>
                         <div class="table__footer--total">
                             <p>Grand Total</p>
-                            <span>$ {{invoice.total}}</span>
+                            <span>$ {{ invoice.total }}</span>
                         </div>
                     </div>
                 </div>
@@ -131,7 +159,9 @@
             <div class="card__header" style="margin-top: 40px">
                 <div></div>
                 <div>
-                    <a class="btn btn-secondary"> Save </a>
+                    <a class="btn btn-secondary" @click="addNewInvoice">
+                        Save
+                    </a>
                 </div>
             </div>
         </div>
@@ -140,8 +170,10 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import api from "../axios";
+import ErrorMessage from '../components/ErrorMessage.vue';
 const customers = ref([]);
 const products = ref([]);
+const errors = ref('');
 const invoice = ref({
     customer: null,
     date: null,
@@ -149,9 +181,10 @@ const invoice = ref({
     numero: null,
     reference: null,
     items: [],
-    sub_total : 0,
-    discount : 0 ,
-    total : 0
+    sub_total: 0,
+    discount: 0,
+    total: 0,
+    terms: "",
 });
 const loading = ref(true);
 onMounted(() => {
@@ -166,46 +199,69 @@ onMounted(() => {
 const printCustomer = () => {
     console.log(invoice.value);
 };
-const addNewLine = ()=>{
+const addNewLine = () => {
     const newItem = {
-        product_id : products.value[0].id,
-        price : products.value[0].price,
-        quantity : 1,
-        total : products.value[0].price
-    }
+        product_id: products.value[0].id,
+        price: products.value[0].price,
+        quantity: 1,
+        total: products.value[0].price,
+    };
     invoice.value.items.push(newItem);
-    invoice.value.sub_total = invoice.value.items.reduce((acc,ele)=>acc + +ele.total,0)
+    invoice.value.sub_total = invoice.value.items.reduce(
+        (acc, ele) => acc + +ele.total,
+        0
+    );
     invoice.value.total = invoice.value.sub_total - invoice.value.discount;
-}
+};
 // changeItem(item.id,item.product_id)
-const changeItem = (item_id,product_id)=>{
-const product = products.value.find(ele => ele.id == product_id);
+const changeItem = (item_id, product_id) => {
+    const product = products.value.find((ele) => ele.id == product_id);
 
-invoice.value.items[item_id] = {
-        product_id : product.id,
-        price : product.price,
-        quantity : 1,
-        total : product.price
-}
-invoice.value.sub_total = invoice.value.items.reduce((acc,ele)=>acc + +ele.total,0);
-invoice.value.total = invoice.value.sub_total - invoice.value.discount;
+    invoice.value.items[item_id] = {
+        product_id: product.id,
+        price: product.price,
+        quantity: 1,
+        total: product.price,
+    };
+    invoice.value.sub_total = invoice.value.items.reduce(
+        (acc, ele) => acc + +ele.total,
+        0
+    );
+    invoice.value.total = invoice.value.sub_total - invoice.value.discount;
 
-console.log('items_id',item_id)
-console.log('invoice is : ',invoice.value);
-console.log('product is ',product);
-}
-const changePrice = (item)=>{
-    invoice.value.items[item].total = invoice.value.items[item].price * invoice.value.items[item].quantity;
-    invoice.value.sub_total = invoice.value.items.reduce((acc,ele)=>acc + +ele.total,0);
+    console.log("items_id", item_id);
+    console.log("invoice is : ", invoice.value);
+    console.log("product is ", product);
+};
+const changePrice = (item) => {
+    invoice.value.items[item].total =
+        invoice.value.items[item].price * invoice.value.items[item].quantity;
+    invoice.value.sub_total = invoice.value.items.reduce(
+        (acc, ele) => acc + +ele.total,
+        0
+    );
     invoice.value.total = invoice.value.sub_total - invoice.value.discount;
-}
-const applyDiscount = ()=>{
+};
+const applyDiscount = () => {
     invoice.value.total = invoice.value.sub_total - invoice.value.discount;
-}
-const deleteItem = (item)=>{
-    invoice.value.items = invoice.value.items.filter((ele,index) => index != item);
-    invoice.value.sub_total = invoice.value.items.reduce((acc,ele)=>acc + +ele.total,0);
+};
+const deleteItem = (item) => {
+    invoice.value.items = invoice.value.items.filter(
+        (ele, index) => index != item
+    );
+    invoice.value.sub_total = invoice.value.items.reduce(
+        (acc, ele) => acc + +ele.total,
+        0
+    );
     invoice.value.total = invoice.value.sub_total - invoice.value.discount;
-}
+};
+const addNewInvoice = async() => {
+    await api.post("/invoice", invoice.value)
+        .then((response) => {
+            console.log(response);
+        })
+        .catch((e) => (errors.value = e.response.data.errors));
+    console.log(errors.value);
+};
 </script>
 <style lang=""></style>
