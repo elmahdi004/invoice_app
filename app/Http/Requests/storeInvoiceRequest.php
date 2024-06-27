@@ -22,7 +22,13 @@ class storeInvoiceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer' => 'required'
+            'customer' => 'required',
+            'date' => 'required',
+            'due_date' => 'required',
+            'numero' => 'required',
+            'reference' => 'required',
+            'items' => 'required',
+            'terms' => 'required',
         ];
     }
 }

@@ -1,6 +1,6 @@
 <template lang="">
     <div>
-        <p  style="color:red">{{ message }}</p>
+        <p  style="color:red;padding-top:5px;">{{ message }}</p>
     </div>
 </template>
 <script setup>

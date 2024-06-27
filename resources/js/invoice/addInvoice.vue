@@ -13,11 +13,15 @@
                     <div>
                         <p class="my-1">Customer</p>
                         <select
-                            @change="printCustomer"
+                            @change="deletePropertyFromErrors('customer')"
                             v-model="invoice.customer"
                             :disabled="loading"
                             class="input"
-                            :style="errors != '' && 'customer' in errors ? 'border:2px solid red;' : ''"
+                            :style="
+                                errors != '' && 'customer' in errors
+                                    ? 'border:2px solid red;'
+                                    : ''
+                            "
                         >
                             <option
                                 v-for="(customer, index) in customers"
@@ -27,7 +31,10 @@
                                 {{ customer.firstname }}
                             </option>
                         </select>
-                        <ErrorMessage v-if="errors != '' && 'customer' in errors" :message="errors.customer[0]"/>
+                        <ErrorMessage
+                            v-if="errors != '' && 'customer' in errors"
+                            :message="errors.customer[0]"
+                        />
                     </div>
                     <div>
                         <p class="my-1">Date</p>
@@ -37,6 +44,11 @@
                             placeholder="dd-mm-yyyy"
                             type="date"
                             class="input"
+                            @input="deletePropertyFromErrors('date')"
+                        />
+                        <ErrorMessage
+                            v-if="errors != '' && 'date' in errors"
+                            :message="errors.date[0]"
                         />
                         <!---->
                         <p class="my-1">Due Date</p>
@@ -45,6 +57,11 @@
                             id="due_date"
                             type="date"
                             class="input"
+                            @input="deletePropertyFromErrors('due_date')"
+                        />
+                        <ErrorMessage
+                            v-if="errors != '' && 'due_date' in errors"
+                            :message="errors.due_date[0]"
                         />
                     </div>
                     <div>
@@ -53,12 +70,22 @@
                             v-model="invoice.numero"
                             type="text"
                             class="input"
+                            @input="deletePropertyFromErrors('numero')"
+                        />
+                        <ErrorMessage
+                            v-if="errors != '' && 'numero' in errors"
+                            :message="errors.numero[0]"
                         />
                         <p class="my-1">Reference(Optional)</p>
                         <input
                             v-model="invoice.reference"
                             type="text"
                             class="input"
+                            @input="deletePropertyFromErrors('reference')"
+                        />
+                        <ErrorMessage
+                            v-if="errors != '' && 'reference' in errors"
+                            :message="errors.reference[0]"
                         />
                     </div>
                 </div>
@@ -122,6 +149,10 @@
                         >
                             Add New Line
                         </button>
+                        <ErrorMessage
+                            v-if="errors != '' && 'items' in errors"
+                            :message="errors.items[0]"
+                        />
                     </div>
                 </div>
 
@@ -133,7 +164,12 @@
                             rows="7"
                             class="textarea"
                             v-model="invoice.terms"
+                            @input="deletePropertyFromErrors('terms')"
                         ></textarea>
+                        <ErrorMessage
+                            v-if="errors != '' && 'terms' in errors"
+                            :message="errors.terms[0]"
+                        />
                     </div>
                     <div>
                         <div class="table__footer--subtotal">
@@ -155,6 +191,12 @@
                         </div>
                     </div>
                 </div>
+                <div
+                    v-if="message != ''"
+                    style="text-align: center; font-weight: bold; color: green"
+                >
+                    {{ message }}
+                </div>
             </div>
             <div class="card__header" style="margin-top: 40px">
                 <div></div>
@@ -170,10 +212,10 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import api from "../axios";
-import ErrorMessage from '../components/ErrorMessage.vue';
+import ErrorMessage from "../components/ErrorMessage.vue";
 const customers = ref([]);
 const products = ref([]);
-const errors = ref('');
+const errors = ref("");
 const invoice = ref({
     customer: null,
     date: null,
@@ -187,6 +229,7 @@ const invoice = ref({
     terms: "",
 });
 const loading = ref(true);
+const message = ref("");
 onMounted(() => {
     api.get("/customers").then(({ data }) => {
         customers.value = data;
@@ -212,6 +255,7 @@ const addNewLine = () => {
         0
     );
     invoice.value.total = invoice.value.sub_total - invoice.value.discount;
+    deletePropertyFromErrors("items");
 };
 // changeItem(item.id,item.product_id)
 const changeItem = (item_id, product_id) => {
@@ -255,13 +299,32 @@ const deleteItem = (item) => {
     );
     invoice.value.total = invoice.value.sub_total - invoice.value.discount;
 };
-const addNewInvoice = async() => {
-    await api.post("/invoice", invoice.value)
+const addNewInvoice = async () => {
+    await api
+        .post("/invoice", invoice.value)
         .then((response) => {
-            console.log(response);
+            invoice.value = {
+                customer: null,
+                date: null,
+                due_date: null,
+                numero: null,
+                reference: null,
+                items: [],
+                sub_total: 0,
+                discount: 0,
+                total: 0,
+                terms: "",
+            };
+            message.value = response.data.message;
         })
         .catch((e) => (errors.value = e.response.data.errors));
     console.log(errors.value);
+};
+const deletePropertyFromErrors = (property) => {
+    if (property in errors.value) {
+        delete errors.value[property];
+        console.log(errors.value);
+    }
 };
 </script>
 <style lang=""></style>

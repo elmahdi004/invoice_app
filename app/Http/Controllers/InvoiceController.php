@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\storeInvoiceRequest;
 use App\Models\Invoice;
+use App\Models\Item;
 use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
@@ -29,7 +30,28 @@ class InvoiceController extends Controller
      */
     public function store(storeInvoiceRequest $request)
     {
-        return $request;
+        $invoice = Invoice::create([
+            'customer_id' =>$request->customer,
+            'number' =>$request->numero,
+            'date' =>$request->date,
+            'due_date' =>$request->due_date,
+            'reference' =>$request->reference,
+            'terms_and_conditions' =>$request->terms,
+            'sub_total' =>$request->sub_total,
+            'discount' =>$request->discount,
+            'total' =>$request->total,
+        ]);
+        foreach($request->items as $item){
+            Item::create([
+                'invoice_id' => $invoice->id,
+                'product_id' => $item['product_id'],
+                'price' => $item['price'],
+                'quantity' => $item['quantity'],
+            ]);
+        }
+        return response([
+            'message' => 'Your invoice has been created'
+        ],201);
     }
 
     /**
